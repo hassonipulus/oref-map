@@ -1275,14 +1275,20 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
       if (!isOpen) enterLiveMode();
     });
 
-    closeBtn.addEventListener('click', function() {
+    function closeTimeline() {
       bar.classList.remove('open');
       toggleBtn.classList.remove('active');
       enterLiveMode();
-    });
+    }
+
+    closeBtn.addEventListener('click', closeTimeline);
 
     liveBtn.addEventListener('click', function() {
       enterLiveMode();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && bar.classList.contains('open')) closeTimeline();
     });
 
     function timeFromSlider(val) {
@@ -1449,7 +1455,12 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
     if (e.target === this) closeAbout();
   });
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeAbout();
+    if (e.key === 'Escape') {
+      closeAbout();
+      closeSoundModal();
+      map.closePopup();
+      document.getElementById('errorDetail').style.display = 'none';
+    }
   });
 
   // --- Sound control & modal ---
