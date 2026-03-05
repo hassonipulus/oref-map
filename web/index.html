@@ -65,6 +65,24 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
 .indicator-ok   { background: #00cc00; }
 .indicator-err  { background: #ff0000; }
 
+#errorDetail {
+  display: none;
+  position: fixed;
+  top: 44px;
+  right: 12px;
+  background: #fff;
+  border: 1px solid #e00;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  max-width: 220px;
+  word-break: break-word;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 1001;
+  direction: ltr;
+  color: #333;
+}
+
 #page-title {
   position: fixed;
   top: 12px;
@@ -278,6 +296,10 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
     padding: 5px 10px;
     font-size: 13px;
   }
+  #errorDetail {
+    top: 38px;
+    right: 8px;
+  }
   #sound-btn {
     bottom: 12px;
     left: 12px;
@@ -333,6 +355,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
   <span class="indicator indicator-ok" id="statusDot"></span>
   <span id="statusText">Connecting...</span>
 </div>
+<div id="errorDetail"></div>
 
 <div id="about-backdrop" class="modal-backdrop">
   <div id="about-modal" class="modal-content">
@@ -395,7 +418,9 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
   var locationStates = {};       // {name: {state, since, marker}}
   var locationHistory = {};      // {name: [{title, alertDate, state}, ...]}
   var lastHistoryDate = null;    // track newest history entry
-  var pollErrors = 0;
+  var liveErrors = 0;
+  var historyErrors = 0;
+  var lastErrorMsg = '';
   var initialized = false;
   var soundMuted = true;
   var soundLocation = 'all';
@@ -909,8 +934,16 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
   function setStatus(ok, text) {
     var dot = document.getElementById('statusDot');
     var txt = document.getElementById('statusText');
+    var statusEl = document.getElementById('status');
     dot.className = 'indicator ' + (ok ? 'indicator-ok' : 'indicator-err');
     txt.textContent = text;
+    if (ok) {
+      statusEl.style.cursor = '';
+      lastErrorMsg = '';
+      document.getElementById('errorDetail').style.display = 'none';
+    } else {
+      statusEl.style.cursor = 'pointer';
+    }
   }
 
   // --- Fetching ---
@@ -926,15 +959,16 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
       })
       .then(function(text) {
         text = stripBom(text).trim();
-        pollErrors = 0;
-        if (isLiveMode) setStatus(true, 'Live');
+        liveErrors = 0;
+        if (isLiveMode && historyErrors <= 3) setStatus(true, 'Live');
         if (!text) return; // no active alert
         var alert = JSON.parse(text);
         processLiveAlert(alert);
       })
       .catch(function(err) {
-        pollErrors++;
-        if (pollErrors > 3) {
+        liveErrors++;
+        lastErrorMsg = 'Live alerts: ' + err.message;
+        if (liveErrors > 3) {
           setStatus(false, 'Error');
         }
         console.error('Live poll error:', err);
@@ -949,6 +983,8 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
       })
       .then(function(text) {
         text = stripBom(text).trim();
+        historyErrors = 0;
+        if (isLiveMode && liveErrors <= 3) setStatus(true, 'Live');
         if (!text) { if (onDone) onDone(); return; }
         var entries = JSON.parse(text);
         if (!Array.isArray(entries)) { if (onDone) onDone(); return; }
@@ -981,8 +1017,9 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
         if (onDone) onDone();
       })
       .catch(function(err) {
-        pollErrors++;
-        if (pollErrors > 3) {
+        historyErrors++;
+        lastErrorMsg = 'Alert history: ' + err.message;
+        if (historyErrors > 3) {
           setStatus(false, 'Error');
         }
         console.error('History fetch error:', err);
@@ -1288,6 +1325,25 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
   function closeAbout() {
     document.getElementById('about-backdrop').classList.remove('visible');
   }
+
+  document.getElementById('status').addEventListener('click', function() {
+    var detail = document.getElementById('errorDetail');
+    var dot = document.getElementById('statusDot');
+    if (!dot.classList.contains('indicator-err')) return;
+    if (detail.style.display === 'block') {
+      detail.style.display = 'none';
+    } else {
+      detail.textContent = lastErrorMsg || 'Unknown error';
+      detail.style.display = 'block';
+    }
+  });
+  document.addEventListener('click', function(e) {
+    var detail = document.getElementById('errorDetail');
+    var status = document.getElementById('status');
+    if (detail.style.display === 'block' && !status.contains(e.target) && e.target !== detail) {
+      detail.style.display = 'none';
+    }
+  });
 
   document.getElementById('page-title').addEventListener('click', openAbout);
   document.getElementById('about-close').addEventListener('click', closeAbout);
