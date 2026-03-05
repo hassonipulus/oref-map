@@ -56,14 +56,15 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
   font-size: 13px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   z-index: 1000;
-  direction: ltr;
+  direction: rtl;
 }
 #status .indicator {
   display: inline-block; width: 8px; height: 8px; border-radius: 50%;
   margin-left: 6px; vertical-align: middle;
 }
-.indicator-ok   { background: #00cc00; }
+.indicator-ok   { background: #00cc00; animation: pulse 3s ease-in-out infinite; }
 .indicator-err  { background: #ff0000; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
 #errorDetail {
   display: none;
@@ -421,6 +422,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
   var liveErrors = 0;
   var historyErrors = 0;
   var lastErrorMsg = '';
+  var lastDangerTime = 0;
   var initialized = false;
   var soundMuted = true;
   var soundLocation = 'all';
@@ -864,6 +866,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
     if (!alert || !alert.data || !alert.title) return;
     var title = alert.title.replace(/\s+/g, ' ').trim();
     var state = classifyTitle(title);
+    if (state !== 'green') lastDangerTime = Date.now();
     var locations = alert.data;
     if (!Array.isArray(locations)) return;
     var now = new Date().toISOString().slice(0, 19).replace('T', ' ');
@@ -891,6 +894,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
     // History `data` is a string (single location)
     var location = (typeof entry.data === 'string' ? entry.data : String(entry.data)).trim();
     var since = parseAlertDate(entry.alertDate) || Date.now();
+    if (state !== 'green' && since > lastDangerTime) lastDangerTime = since;
     recordHistory(location, title, entry.alertDate || '', state);
 
     // Also feed into extendedHistory for timeline
@@ -928,6 +932,33 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
     for (var i = 0; i < toRemove.length; i++) {
       removeLocation(toRemove[i]);
     }
+    if (toRemove.length > 0) updateLiveStatus();
+  }
+
+  function formatRelativeTime(ts) {
+    if (!ts) return '';
+    var diffMs = Date.now() - ts;
+    if (diffMs < 0) diffMs = 0;
+    var mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'לפני פחות מדקה';
+    if (mins < 60) return 'לפני ' + mins + ' דקות';
+    var hours = Math.floor(mins / 60);
+    if (hours < 24) return 'לפני ' + hours + ' שעות';
+    return '';
+  }
+
+  function updateLiveStatus() {
+    if (!isLiveMode) return;
+    var hasActive = false;
+    for (var name in locationStates) {
+      if (locationStates[name].state !== 'green') { hasActive = true; break; }
+    }
+    if (hasActive) {
+      setStatus(true, 'התרעות פעילות');
+    } else {
+      var rel = formatRelativeTime(lastDangerTime);
+      setStatus(true, rel ? 'אין כרגע התרעות · הזעקה אחרונה ' + rel : 'אין התרעות פעילות');
+    }
   }
 
   // --- Status indicator ---
@@ -960,7 +991,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
       .then(function(text) {
         text = stripBom(text).trim();
         liveErrors = 0;
-        if (isLiveMode && historyErrors <= 3) setStatus(true, 'Live');
+        if (isLiveMode && historyErrors <= 3) updateLiveStatus();
         if (!text) return; // no active alert
         var alert = JSON.parse(text);
         processLiveAlert(alert);
@@ -984,7 +1015,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
       .then(function(text) {
         text = stripBom(text).trim();
         historyErrors = 0;
-        if (isLiveMode && liveErrors <= 3) setStatus(true, 'Live');
+        if (isLiveMode && liveErrors <= 3) updateLiveStatus();
         if (!text) { if (onDone) onDone(); return; }
         var entries = JSON.parse(text);
         if (!Array.isArray(entries)) { if (onDone) onDone(); return; }
@@ -1210,7 +1241,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
       label.classList.add('live-label');
       stopPlay();
       restoreLiveState();
-      setStatus(true, 'Live');
+      updateLiveStatus();
     }
 
     function enterHistoryMode(time) {
@@ -1307,7 +1338,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
           setInterval(function() { fetchHistory(); }, HISTORY_POLL_MS);
           setInterval(fadeGreenMarkers, FADE_TICK_MS);
           fetchLiveAlerts(); // first live poll immediately
-          setStatus(true, 'Live');
+          updateLiveStatus();
         }
         fetchHistory(function() { historyDone = true; onBothDone(); });
         fetchExtendedHistory(function() { extendedDone = true; onBothDone(); });
