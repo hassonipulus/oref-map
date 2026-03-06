@@ -1389,9 +1389,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
         var dt = now - lastFrame;
         lastFrame = now;
         // Advance at 600x speed: 1 real ms = 600 ms of timeline
-        var currentVal = parseInt(slider.value);
-        var currentTime = timeFromSlider(currentVal);
-        var newTime = currentTime + dt * 600;
+        var newTime = currentViewTime + dt * 600;
         if (newTime >= timelineMax) {
           // Loop back to beginning
           slider.value = 0;
