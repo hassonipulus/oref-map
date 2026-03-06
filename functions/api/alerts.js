@@ -13,7 +13,6 @@ export async function onRequestGet() {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       'Cache-Control': resp.headers.get('Cache-Control') || 'public, max-age=2',
-      'Access-Control-Allow-Origin': '*',
     },
   });
 }
