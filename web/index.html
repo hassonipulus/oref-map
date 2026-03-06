@@ -860,16 +860,17 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
 
   function recordHistory(name, title, alertDate, state) {
     if (!locationHistory[name]) locationHistory[name] = [];
+    var ts = parseAlertDate(alertDate);
     // Skip entries older than 12 hours
-    if (alertDate) {
-      var ts = new Date(alertDate.replace(' ', 'T')).getTime();
-      if (!isNaN(ts) && Date.now() - ts > 12 * 60 * 60 * 1000) return;
-    }
+    if (ts && Date.now() - ts > 12 * 60 * 60 * 1000) return;
     var arr = locationHistory[name];
-    // Dedup by alertDate (truncated to minute) + title
-    var normDate = (alertDate || '').replace('T', ' ').slice(0, 16);
+    // Dedup: same title within 1 minute
     for (var i = 0; i < arr.length; i++) {
-      if ((arr[i].alertDate || '').replace('T', ' ').slice(0, 16) === normDate && arr[i].title === title) return;
+      if (arr[i].title === title) {
+        var existingTs = parseAlertDate(arr[i].alertDate);
+        if (ts && existingTs && Math.abs(ts - existingTs) <= 60000) return;
+        if (!ts && !existingTs) return;
+      }
     }
     arr.push({ title: title, alertDate: alertDate, state: state });
     // Refresh popup if it's open for this location
@@ -919,7 +920,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
       '</div>';
     }).join('');
     return '<div style="direction:rtl;width:min(360px,85vw);text-align:right"><b>' + name + '</b>' +
-      (rows ? '<div style="margin-top:6px">' + rows + '</div>' : '<p style="color:#888;margin-top:6px">אין היסטוריה</p>') +
+      (rows ? '<div style="margin-top:6px">' + rows + '</div>' : '<p style="color:#888;margin-top:6px">אין אירועים לאחרונה</p>') +
       '</div>';
   }
 
