@@ -49,7 +49,7 @@ Do **not** use `cat`/`category` for classification — the same number is reused
 | Title | Meaning | Map state |
 |---|---|---|
 | `ירי רקטות וטילים` | Rocket/missile fire | 🔴 Red |
-| `חדירת כלי טיס עוין` | Hostile drone/aircraft | 🟠 Orange |
+| `חדירת כלי טיס עוין` | Hostile drone/aircraft | 🟣 Purple |
 | `נשק לא קונבנציונלי` | Non-conventional weapon | 🔴 Red |
 | `חדירת מחבלים` | Terrorist infiltration | 🔴 Red |
 | `היכנסו מייד למרחב המוגן` | Enter shelter immediately | 🔴 Red |

@@ -59,7 +59,7 @@ Alerts are classified by **title text** only — category numbers are unreliable
 | State | Color | Title match |
 |-------|-------|-------------|
 | Danger | Red | `ירי רקטות וטילים`, `נשק לא קונבנציונלי`, `חדירת מחבלים` |
-| Danger | Orange | `חדירת כלי טיס עוין` |
+| Danger | Purple | `חדירת כלי טיס עוין` |
 | Caution | Yellow | `בדקות הקרובות צפויות להתקבל התרעות באזורך` |
 | All-clear | Green | Substring: `האירוע הסתיים`, `ניתן לצאת`, `החשש הוסר` |
 | Normal | — | No alert |
@@ -68,7 +68,7 @@ Unknown titles default to red and log a console warning.
 
 ### State Transitions & Priority
 
-- **Priority**: `red > orange > yellow` — a lower-priority color cannot overwrite a higher one. Green (all-clear) always overrides any active state.
+- **Priority**: `red > purple > yellow` — a lower-priority color cannot overwrite a higher one. Green (all-clear) always overrides any active state.
 - **Green fade**: After receiving an all-clear, the polygon fades out over `GREEN_FADE_MS` (60 seconds) then returns to normal.
 - **Page load**: History API is fetched to reconstruct current state before polling begins.
 
@@ -109,7 +109,7 @@ All overlays use `position: fixed`, `z-index: 1000`, semi-transparent white back
 
 ## Alert Sounds
 
-Web Audio API oscillator-based sounds (no external files). Muted by default. Two distinct tones: one for danger alerts (red/orange), one for all-clears (green). Sounds only play after initialization (initial history reconstruction) is complete.
+Web Audio API oscillator-based sounds (no external files). Muted by default. Two distinct tones: one for danger alerts (red/purple), one for all-clears (green). Sounds only play after initialization (initial history reconstruction) is complete.
 
 ## Development
 

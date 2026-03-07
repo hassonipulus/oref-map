@@ -13,7 +13,7 @@ issue_enrichment:
       - label: alert-handling
         instructions: >
           Changes to alert classification, adding new alert titles, alert colors
-          (red/orange/yellow/green), all-clear handling, or alert type detection.
+          (red/purple/yellow/green), all-clear handling, or alert type detection.
           Includes Hebrew alert titles like ירי רקטות וטילים, חדירת כלי טיס עוין,
           ניתן לצאת מהמרחב המוגן, etc.
       - label: ui

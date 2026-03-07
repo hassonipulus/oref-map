@@ -29,6 +29,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
 #map { width: 100%; height: 100%; direction: ltr; }
 .leaflet-interactive:hover, .polygon-active { fill-opacity: 0.7 !important; stroke-opacity: 1 !important; stroke-linejoin: round !important; stroke-width: 4 !important; }
 .leaflet-interactive:focus { outline: none; }
+@keyframes tapHintFade { 0%,70% { opacity: 1; } 100% { opacity: 0; } }
 
 #legend {
   position: fixed;
@@ -49,7 +50,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
   width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
 }
 .dot-red    { background: #ff0000; }
-.dot-orange { background: #9922cc; }
+.dot-purple { background: #9922cc; }
 .dot-yellow { background: #ffcc00; }
 .dot-green  { background: #00cc00; }
 
@@ -389,7 +390,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
 
 <div id="legend">
   <div class="row"><div class="dot dot-red"></div><span>ירי רקטות וטילים</span></div>
-  <div class="row"><div class="dot dot-orange"></div><span>חדירת כלי טיס עוין</span></div>
+  <div class="row"><div class="dot dot-purple"></div><span>חדירת כלי טיס עוין</span></div>
   <div class="row"><div class="dot dot-yellow"></div><span>התרעה מוקדמת על טילים</span></div>
   <div class="row"><div class="dot dot-green"></div><span>אירוע שהסתיים</span></div>
 </div>
@@ -426,6 +427,10 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
       <button id="sound-cancel-btn" style="flex:1; padding:10px; border:none; background:#f5f5f5; border-radius:6px; cursor:pointer;">ביטול</button>
     </div>
   </div>
+</div>
+
+<div id="tap-hint" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#fff; padding:10px 20px; border-radius:8px; font-size:14px; z-index:1001; direction:rtl; text-align:center; animation:tapHintFade 5s forwards; pointer-events:none;">
+  לחצו על המפה לצפייה בהיסטוריית התראות
 </div>
 
 <button id="sound-btn" title="השמעת צלילים"><span class="btn-icon">🔇</span><span class="btn-text">ללא התראה קולית</span></button>
@@ -503,7 +508,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
   var cityPolygons = [];    // cityPolygons[i] = L.polygon
 
   // --- Colors ---
-  var COLORS = { red: '#ff0000', orange: '#9922cc', yellow: '#ffcc00', green: '#00cc00' };
+  var COLORS = { red: '#ff0000', purple: '#9922cc', yellow: '#ffcc00', green: '#00cc00' };
   var BASE_STYLE = { fillColor: '#888', fillOpacity: 0.01, color: '#888', opacity: 0 };
 
   // --- Sound ---
@@ -797,9 +802,9 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
       return 'yellow';
     }
 
-    // Orange — drone infiltration
+    // Purple — drone infiltration
     if (title === 'חדירת כלי טיס עוין') {
-      return 'orange';
+      return 'purple';
     }
 
     // Red — active danger (missiles / non-conventional / terrorists / shelter now)
@@ -821,8 +826,8 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
 
     var existing = locationStates[name];
 
-    // Priority: red > orange > yellow. Green always overrides (all-clear).
-    var PRIORITY = { red: 3, orange: 2, yellow: 1, green: 0 };
+    // Priority: red > purple > yellow. Green always overrides (all-clear).
+    var PRIORITY = { red: 3, purple: 2, yellow: 1, green: 0 };
     if (existing) {
       if (state !== 'green') {
         if (existing.state === state) return;
@@ -944,6 +949,57 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
         openPopupName = null; openPopupMarker = null;
         if (el) el.classList.remove('polygon-active');
       });
+  }
+
+  // --- Polygon pulse hint (mobile) ---
+  function showPolygonHint() {
+    // Collect all currently colored polygons and those with recent history
+    var targets = []; // [{polygon, name, color, origStyle}]
+
+    for (var name in locationStates) {
+      var entry = locationStates[name];
+      var idx = cityIndex[name];
+      if (idx == null || !cityPolygons[idx]) continue;
+      var op = entry.state === 'green' ? 0.6 : 0.5;
+      targets.push({
+        polygon: cityPolygons[idx],
+        color: COLORS[entry.state],
+        origStyle: { color: COLORS[entry.state], fillColor: COLORS[entry.state], fillOpacity: op, opacity: op + 0.2, weight: 1 }
+      });
+    }
+
+    // Also include recently-faded polygons with history but no active state
+    if (targets.length === 0) {
+      for (var hName in locationHistory) {
+        if (locationHistory[hName].length > 0 && !locationStates[hName]) {
+          var hIdx = cityIndex[hName];
+          if (hIdx != null && cityPolygons[hIdx]) {
+            targets.push({ polygon: cityPolygons[hIdx], color: COLORS.green, origStyle: BASE_STYLE });
+          }
+        }
+      }
+    }
+
+    if (targets.length === 0) return;
+
+    var step = 0, totalSteps = 30; // 3 cycles * 10 steps per cycle
+    var interval = setInterval(function() {
+      var t = (step % 10) / 10;
+      var opacity = 0.05 + 0.15 * Math.sin(t * Math.PI);
+      for (var i = 0; i < targets.length; i++) {
+        targets[i].polygon.setStyle({
+          fillColor: targets[i].color, fillOpacity: opacity,
+          color: targets[i].color, opacity: Math.min(opacity + 0.2, 1), weight: 2
+        });
+      }
+      step++;
+      if (step >= totalSteps) {
+        clearInterval(interval);
+        for (var j = 0; j < targets.length; j++) {
+          targets[j].polygon.setStyle(targets[j].origStyle);
+        }
+      }
+    }, 100);
   }
 
   // --- Process alerts ---
@@ -1212,7 +1268,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
 
     // Replay history up to targetTime
     var accumulated = {}; // {location: {state, since}}
-    var PRIORITY = { red: 3, orange: 2, yellow: 1, green: 0 };
+    var PRIORITY = { red: 3, purple: 2, yellow: 1, green: 0 };
     for (var i = 0; i < extendedHistory.length; i++) {
       var e = extendedHistory[i];
       if (e.alertDate > targetTime) break;
@@ -1287,7 +1343,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
 
   function updateShadowState(name, state, since) {
     if (!liveLocationStates) return;
-    var PRIORITY = { red: 3, orange: 2, yellow: 1, green: 0 };
+    var PRIORITY = { red: 3, purple: 2, yellow: 1, green: 0 };
     var existing = liveLocationStates[name];
     if (existing) {
       if (state === 'green') {
@@ -1461,6 +1517,7 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
           setInterval(fadeGreenMarkers, FADE_TICK_MS);
           fetchLiveAlerts(); // first live poll immediately
           updateLiveStatus();
+          if ('ontouchstart' in window) setTimeout(showPolygonHint, 500);
         }
         fetchHistory(function() { historyDone = true; onBothDone(); });
         fetchExtendedHistory(function() { extendedDone = true; onBothDone(); });
@@ -1497,6 +1554,14 @@ html, body { height: 100%; font-family: Arial, sans-serif; }
       detail.style.display = 'none';
     }
   });
+
+  // Show tap hint for mobile users on first visit
+  if ('ontouchstart' in window && !localStorage.getItem('tapHintShown')) {
+    var hint = document.getElementById('tap-hint');
+    hint.style.display = 'block';
+    localStorage.setItem('tapHintShown', '1');
+    hint.addEventListener('animationend', function() { hint.remove(); });
+  }
 
   document.getElementById('page-title').addEventListener('click', openAbout);
   document.getElementById('about-close').addEventListener('click', closeAbout);

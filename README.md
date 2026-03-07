@@ -15,7 +15,7 @@ Live map of Israel showing [Pikud HaOref](https://www.oref.org.il) (Home Front C
 | Color | Meaning |
 |-------|---------|
 | 🔴 Red | Rocket/missile fire |
-| 🟠 Orange | Drone/aircraft infiltration |
+| 🟣 Purple | Drone/aircraft infiltration |
 | 🟡 Yellow | Early warning — Iran launch, sirens expected in ~10 min |
 | 🟢 Green | Event ended (fades out after 1 minute) |
 
