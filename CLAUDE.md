@@ -57,6 +57,7 @@ Do **not** use `cat`/`category` for classification — the same number is reused
 | `היכנסו למרחב המוגן` | Enter the shelter | 🔴 Red |
 | `בדקות הקרובות צפויות להתקבל התרעות באזורך` | Early warning — Iran launch, sirens expected in ~10 min | 🟡 Yellow |
 | `על תושבי האזורים הבאים לשפר את המיקום למיגון המיטבי בקרבתך...` | Preparedness notice — improve shelter position, enter shelter if alert received | 🟡 Yellow |
+| `יש לשהות בסמיכות למרחב המוגן` | Stay near the shelter | 🟡 Yellow |
 | `ירי רקטות וטילים - האירוע הסתיים` | Rocket event over | 🟢 Green (fades) |
 | `חדירת כלי טיס עוין - האירוע הסתיים` | Aircraft event over | 🟢 Green (fades) |
 | `ניתן לצאת מהמרחב המוגן` | Can leave shelter | 🟢 Green (fades) |
