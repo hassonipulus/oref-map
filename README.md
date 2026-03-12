@@ -23,7 +23,7 @@ Live map of Israel showing [Pikud HaOref](https://www.oref.org.il) (Home Front C
 |-------|---------|
 | 🔴 Red | Rocket/missile fire |
 | 🟣 Purple | Drone/aircraft infiltration |
-| 🟡 Yellow | Early warning — Iran launch, sirens expected in ~10 min |
+| 🟡 Yellow | Preparedness / early warning (stay near shelter, sirens expected) |
 | 🟢 Green | Event ended (fades out after 1 minute) |
 
 ## Development
@@ -36,10 +36,16 @@ Requires [Node.js](https://nodejs.org) and `npx` (comes with npm). Uses [Wrangle
 
 ## Deploy
 
-Deployed to [Cloudflare Pages](https://pages.cloudflare.com):
+Deployed to [Cloudflare Pages](https://pages.cloudflare.com) (static assets + TLV proxy):
 
 ```sh
 ./deploy
+```
+
+The fallback Worker (for non-TLV users) is deployed separately:
+
+```sh
+cd worker && npx wrangler deploy
 ```
 
 ## Structure
@@ -53,6 +59,9 @@ functions/
     alerts.js         # proxies live alerts API
     history.js        # proxies history API
     alarms-history.js # proxies extended history API
+worker/
+  src/index.js        # fallback proxy for non-TLV users (placement: azure:israelcentral)
+  wrangler.toml       # Worker config with placement and /api2/* route
 ```
 
 ## Data
