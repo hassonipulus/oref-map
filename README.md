@@ -34,6 +34,8 @@ Live map of Israel showing [Pikud HaOref](https://www.oref.org.il) (Home Front C
 
 Requires [Node.js](https://nodejs.org) and `npx` (comes with npm). Uses [Wrangler](https://developers.cloudflare.com/workers/wrangler/) to serve `web/` and run the API proxy functions locally.
 
+The polygon data file (`locations_polygons.json`) is not in the repo — `./web-dev` downloads it automatically from the live site if missing.
+
 ## Deploy
 
 Deployed to [Cloudflare Pages](https://pages.cloudflare.com) (static assets + TLV proxy):
@@ -63,6 +65,17 @@ worker/
   src/index.js        # fallback proxy for non-TLV users (placement: azure:israelcentral)
   wrangler.toml       # Worker config with placement and /api2/* route
 ```
+
+## Contributing
+
+Contributions are welcome! This is a civic project built for anyone in Israel who wants better situational awareness during alerts.
+
+Ways to help:
+- **Bug reports** — open an issue if something looks wrong
+- **Location data** — if a polygon is missing or misplaced, open an issue with the location name
+- **Features & fixes** — PRs are welcome; for larger features, consider opening an issue first to discuss before investing the effort
+
+To run locally, see the [Development](#development) section above.
 
 ## Data
 
