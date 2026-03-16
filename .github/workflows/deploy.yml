@@ -28,7 +28,7 @@ jobs:
 
   deploy-workers:
     concurrency:
-      group: workers-prod-main
+      group: worker-${{ matrix.name }}-prod-main
       cancel-in-progress: true
     runs-on: ubuntu-latest
     permissions:
