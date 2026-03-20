@@ -1627,7 +1627,10 @@ body.has-overlay .leaflet-interactive { pointer-events: none !important; }
     } else {
       var rel = formatRelativeTime(lastDangerTime);
       if (rel) {
-        setStatusHTML('green', 'אין כרגע התרעות<br><a href="#" id="lastAlertLink">התרעה אחרונה ' + rel + '</a>');
+        var lastLine = (dayHistoryReady && extendedHistory.length > 0)
+          ? '<a href="#" id="lastAlertLink">התרעה אחרונה ' + rel + '</a>'
+          : 'התרעה אחרונה ' + rel;
+        setStatusHTML('green', 'אין כרגע התרעות<br>' + lastLine);
       } else {
         setStatus('green', 'אין התרעות פעילות');
       }
@@ -2611,7 +2614,7 @@ body.has-overlay .leaflet-interactive { pointer-events: none !important; }
 
   function updateSoundButton() {
     var icon = soundMuted ? '\uD83D\uDD07' : '\uD83D\uDD0A';
-    var text = soundMuted ? 'ללא התרע ה קולית' : (soundLocation === 'all' ? 'צליל מופעל' : soundLocation);
+    var text = soundMuted ? 'ללא התרעה קולית' : (soundLocation === 'all' ? 'צליל מופעל' : soundLocation);
     soundBtnRow.querySelector('.btn-icon').textContent = icon;
     soundBtnRow.querySelector('.btn-text').textContent = text;
     soundBtn.title = soundMuted ? 'השמעת צלילים' : 'צלילים: ' + (soundLocation === 'all' ? 'כל הארץ' : soundLocation);
