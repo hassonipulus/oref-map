@@ -14,6 +14,12 @@ export async function onRequestGet(context) {
   const complete = await context.env.HISTORY_BUCKET.head(`${date}.complete`);
   const obj = await context.env.HISTORY_BUCKET.get(`${date}.jsonl`);
   if (!obj) {
+    const todayIsrael = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Jerusalem' }).format(new Date());
+    if (date === todayIsrael) {
+      return new Response('[]', {
+        headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=60' },
+      });
+    }
     return new Response('Not Found', { status: 404 });
   }
 
