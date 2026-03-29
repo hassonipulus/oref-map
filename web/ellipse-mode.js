@@ -511,15 +511,11 @@
       return !cluster || cluster.length < MIN_ELLIPSE_CLUSTER_SIZE;
     }
 
-    function addEllipseOverlay(points, alerts) {
+    function addEllipseOverlay(points) {
       if (!points.length) return;
 
       var geometry = buildEllipseGeometry(points);
       if (!geometry) return;
-
-      var popupHtml = alerts.map(function(alert) {
-        return alert.location + (alert.alertDate ? '<br><small>' + alert.alertDate + '</small>' : '');
-      }).join('<hr style="border:none;border-top:1px solid #eee;margin:6px 0;">');
 
       var overlay = addGeometryOverlay(geometry, {
         color: '#9922cc',
@@ -527,7 +523,7 @@
         opacity: 0.95,
         fillColor: '#9922cc',
         fillOpacity: 0.08
-      }, popupHtml);
+      });
       if (overlay) ellipseOverlays.push(overlay);
     }
 
@@ -795,7 +791,7 @@
           ellipseMarkers.push(marker);
           placedPoints.push({ lat: point[0], lng: point[1] });
         }
-        addEllipseOverlay(placedPoints, clusters[c]);
+        addEllipseOverlay(placedPoints);
         renderedClusterCount += 1;
       }
       return { missing: missing, clusterCount: renderedClusterCount };
