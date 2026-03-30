@@ -33,7 +33,7 @@ function randomTlvProxy() {
   return randomFrom(TLV_PROXY_HOSTS);
 }
 
-async function fetchAndCache(context, { upstreamUrl, cacheKeyUrl, kind, colo, servedBy, headers }) {
+async function fetchAndCache(context, { upstreamUrl, cacheKeyUrl, kind, colo, servedBy, headers, upstreamProxyLabel }) {
   const cache = caches.default;
   const cacheKey = new Request(cacheKeyUrl || context.request.url, { method: 'GET' });
 
@@ -41,6 +41,7 @@ async function fetchAndCache(context, { upstreamUrl, cacheKeyUrl, kind, colo, se
   if (cached) {
     const resp = new Response(cached.body, cached);
     resp.headers.set('X-CF-Colo', colo);
+    if (upstreamProxyLabel) resp.headers.set('X-Upstream-Proxy', upstreamProxyLabel);
     return resp;
   }
 
@@ -56,6 +57,7 @@ async function fetchAndCache(context, { upstreamUrl, cacheKeyUrl, kind, colo, se
       'Cache-Control': 's-maxage=1, max-age=2',
       'X-CF-Colo': colo,
       'X-Served-By': servedBy,
+      ...(upstreamProxyLabel ? { 'X-Upstream-Proxy': upstreamProxyLabel } : {}),
     },
   });
 
@@ -77,15 +79,17 @@ async function fetchOrefDirect(context, target, kind, colo) {
     colo,
     servedBy: 'pages-function',
     headers: OREF_HEADERS,
+    upstreamProxyLabel: 'oref-direct',
   });
 }
 
-async function fetchProxyResponse(context, proxyUrl, kind, colo) {
+async function fetchProxyResponse(context, proxyUrl, kind, colo, upstreamProxyLabel) {
   return fetchAndCache(context, {
     upstreamUrl: proxyUrl,
     kind,
     colo,
     servedBy: 'pages-function',
+    upstreamProxyLabel,
   });
 }
 
@@ -233,16 +237,18 @@ export async function orefProxy(context, { target, redirectSuffix, kind }) {
   if (debugApi) {
     const proxyHost = PROXY_HOST_PATTERNS.some(p => p.test(debugApi)) ? 'https://' + debugApi : null;
     if (proxyHost) {
-      return fetchProxyResponse(context, proxyHost + redirectSuffix, kind, colo);
+      return fetchProxyResponse(context, proxyHost + redirectSuffix, kind, colo, debugApi);
     }
   }
 
   // Non-TLV requests fetch through the shared proxy pool.
   if (colo !== 'TLV') {
-    return fetchProxyResponse(context, randomNonTlvProxy() + redirectSuffix, kind, colo);
+    const proxyHost = randomNonTlvProxy();
+    return fetchProxyResponse(context, proxyHost + redirectSuffix, kind, colo, proxyHost);
   }
 
   // TLV requests fetch through a dedicated proxy pool so local traffic can be
   // isolated from the general proxy fleet.
-  return fetchProxyResponse(context, randomTlvProxy() + redirectSuffix, kind, colo);
+  const proxyHost = randomTlvProxy();
+  return fetchProxyResponse(context, proxyHost + redirectSuffix, kind, colo, proxyHost);
 }
