@@ -8,6 +8,8 @@ All endpoints are **geo-blocked** — non-Israeli IPs receive HTTP 403.
 
 ## www.oref.org.il
 
+The main Pikud Haoref website is a Single Page Application based on Angular 15. Built 2022-2023.
+
 | URL | Purpose |
 |---|---|
 | [`/warningMessages/alert/Alerts.json`](https://www.oref.org.il/warningMessages/alert/Alerts.json) | **Live alerts** — current active alert snapshot, polled every ~1s. Returns JSON or BOM-only empty body when no alert. |
@@ -29,6 +31,8 @@ In late March 2026, the oref API briefly switched to Hebrew typographic characte
 **Defensive code**: `normalizeGeresh()` in `web/index.html` converts Hebrew geresh/gershayim back to ASCII at all ingestion points. Currently a no-op, but protects against a future recurrence. The backfill script queries both ASCII and Hebrew character variants for cities with apostrophes.
 
 ## alerts-history.oref.org.il
+
+https://alerts-history.oref.org.il/12481-he/Pakar.aspx?pagemode=iframe - Standalone older alerts archive website UI (not a JSON endpoint), embedded as an iframe in the main Pikud Haoref website. An ASP.NET WebForms site developed in 2014-2015. Uses the following ajax endpoints:
 
 | URL | Purpose |
 |---|---|
